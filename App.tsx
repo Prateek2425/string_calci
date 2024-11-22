@@ -5,62 +5,65 @@
  * @format
  */
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
+import React, { useState } from 'react';
 import {
+  Button,
+  Pressable,
   SafeAreaView,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   useColorScheme,
   View,
 } from 'react-native';
 
 import {
   Colors,
-  DebugInstructions,
   Header,
-  LearnMoreLinks,
-  ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
-
 function App(): React.JSX.Element {
+  const [input, setInput] = useState("")
+  const [output, setOutput] = useState("0")
+
+
   const isDarkMode = useColorScheme() === 'dark';
 
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+    flex: 1
   };
+
+  const submitHandler = () => {
+    try {
+      let delimiter = /,|\n/;
+      let numbersPart = input;
+
+      if (input.startsWith("//")) {
+        const match = input.match(/^\/\/(.+)\n/);
+        if (match) {
+          delimiter = new RegExp(match[1].replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+          numbersPart = input.slice(match[0].length)
+        } else {
+          throw new Error("invalid custom delimiter format")
+        }
+      }
+      const numbers = numbersPart?.split(delimiter).map(Number)
+      const negatives = numbers.filter(num => num < 0)
+      if (negatives?.length > 0) {
+        throw new Error(`Negative not allowed: ${negatives.join(", ")}`);
+      }
+      if (numbers.some(isNaN)) {
+        throw new Error("invalid number formate")
+      }
+      const sum = numbers.reduce((acc, num) => acc + num, 0)
+      setOutput(sum)
+    } catch (error) {
+      console.log("err", error)
+      setOutput(String(error))
+    }
+  }
 
   return (
     <SafeAreaView style={backgroundStyle}>
@@ -68,51 +71,41 @@ function App(): React.JSX.Element {
         barStyle={isDarkMode ? 'light-content' : 'dark-content'}
         backgroundColor={backgroundStyle.backgroundColor}
       />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
+      <View style={styles.container}>
+        <Text style={{ fontWeight: "500", fontSize: 18 }}>{output}</Text>
+        <TextInput value={input} onChangeText={(e) => setInput(e)} style={styles.textinputs} />
+        <Pressable style={styles.button} onPress={submitHandler} >
+          <Text style={{ fontWeight: "500", fontSize: 16, color: "#fff" }}>{"Submit"}</Text>
+        </Pressable>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+  textinputs: {
+    backgroundColor: "#fff",
+    width: "90%",
+    borderRadius: 12,
+    elevation: 5,
+    marginVertical: 20,
+    padding: 10
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
+  button: {
+    backgroundColor: "skyblue",
+    width: "90%",
+    borderRadius: 12,
+    elevation: 5,
+    padding: 12,
+    alignItems: "center"
+
+  }
 });
 
 export default App;
